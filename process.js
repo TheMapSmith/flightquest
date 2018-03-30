@@ -5,6 +5,7 @@ const fs = require('fs')
 const airportsDataSource = fs.readFileSync('data/airports.dat', 'utf-8')
 const airportTextStrings = airportsDataSource.split('\n')
 
+const airportCodeArray = []
 const airportDataArray = []
 
 processStrings()
@@ -26,12 +27,14 @@ function  processStrings(){
         itemDeStringed.push(updated)
       }
 
+
       var singleAirportJSON = {}
+
+      airportCodeArray.push(itemDeStringed[4])
       singleAirportJSON.AirportID = itemDeStringed[0]
       singleAirportJSON.Name = itemDeStringed[1]
       singleAirportJSON.City = itemDeStringed[2]
       singleAirportJSON.Country = itemDeStringed[3]
-      singleAirportJSON.IATA = itemDeStringed[4]
       singleAirportJSON.ICAO = itemDeStringed[5]
       singleAirportJSON.Latitude = itemDeStringed[6]
       singleAirportJSON.Longitude = itemDeStringed[7]
@@ -48,5 +51,6 @@ function  processStrings(){
 }
 
 function saveFile(airportDataArray){
-  fs.writeFile('data/airports.json', JSON.stringify(airportDataArray), 'utf-8', function(){console.log('written');})
+  fs.writeFile('data/airportCodes.json', JSON.stringify(airportCodeArray), 'utf-8', function(){console.log('codes written');})
+  fs.writeFile('data/airportData.json', JSON.stringify(airportDataArray), 'utf-8', function(){console.log('data written');})
 }
