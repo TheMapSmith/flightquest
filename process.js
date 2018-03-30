@@ -21,14 +21,17 @@ function  processStrings(){
     else {
       var item = airportTextStrings[i].split(',')
       var itemDeStringed = []
+      var singleAirportJSON = {}
 
       for (var j = 0; j < item.length; j++) {
+        if (j >= 6 && j <= 8) {
+          itemDeStringed.push(item[j])
+        }
+        else {
           var updated = item[j].substring(1,item[j].length-1)
           itemDeStringed.push(updated)
+        }
       }
-
-
-      var singleAirportJSON = {}
 
       airportCodeArray.push(itemDeStringed[4])
       singleAirportJSON.AirportID = itemDeStringed[0]
