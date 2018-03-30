@@ -1,0 +1,19 @@
+{
+  "name": "flightquest",
+  "version": "1.0.0",
+  "description": "Whats that on the ground?",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheMapSmith/flightquest.git"
+  },
+  "author": "@TheMapSmith",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/TheMapSmith/flightquest/issues"
+  },
+  "homepage": "https://github.com/TheMapSmith/flightquest#readme"
+}
