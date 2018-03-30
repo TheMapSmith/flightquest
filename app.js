@@ -13,8 +13,10 @@ function getAirportCoords() {
     if (i != airports.length) {
       var codeIndex = airportCodes.indexOf(airports[i])
       if (codeIndex > 0) {
-        allCoords.push(airportData[codeIndex].Longitude)
-        allCoords.push(airportData[codeIndex].Latitude)
+        var lnglat = []
+        lnglat.push(airportData[codeIndex].Longitude)
+        lnglat.push(airportData[codeIndex].Latitude)
+        allCoords.push(lnglat)
       }
     } else {
       setbbox(allCoords)
@@ -23,5 +25,7 @@ function getAirportCoords() {
 }
 
 function setbbox(allCoords) {
-  console.log(allCoords);
+  for (var i = 0; i < allCoords.length; i++) {
+    var oneCoordPair = allCoords[i]
+  }
 }
