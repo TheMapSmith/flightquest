@@ -23,8 +23,8 @@ function  processStrings(){
       var itemDeStringed = []
 
       for (var j = 0; j < item.length; j++) {
-        var updated = item[j].substring(1,item[j].length-1)
-        itemDeStringed.push(updated)
+          var updated = item[j].substring(1,item[j].length-1)
+          itemDeStringed.push(updated)
       }
 
 
