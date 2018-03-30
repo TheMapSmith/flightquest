@@ -4,7 +4,8 @@
   "description": "Whats that on the ground?",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/TheMapSmith/flightquest/issues"
   },
-  "homepage": "https://github.com/TheMapSmith/flightquest#readme"
+  "homepage": "https://github.com/TheMapSmith/flightquest#readme",
+  "devDependencies": {
+    "electron": "^1.8.4"
+  }
 }
