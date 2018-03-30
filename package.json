@@ -19,7 +19,7 @@
   "homepage": "https://github.com/TheMapSmith/flightquest#readme",
   "devDependencies": {
     "electron": "^1.8.4",
-    "electron-connect": "^0.6.3"
+    "electron-reload": "^1.2.2"
   },
   "dependencies": {
     "mapbox-gl": "^0.44.1"
