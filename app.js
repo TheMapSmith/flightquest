@@ -13,10 +13,8 @@ function getAirportCoords() {
     if (i != airports.length) {
       var codeIndex = airportCodes.indexOf(airports[i])
       if (codeIndex > 0) {
-        var lnglat = []
-        lnglat.push(airportData[codeIndex].Longitude)
-        lnglat.push(airportData[codeIndex].Latitude)
-        allCoords.push(lnglat)
+        allCoords.push(airportData[codeIndex].Longitude)
+        allCoords.push(airportData[codeIndex].Latitude)
       }
     } else {
       setbbox(allCoords)
