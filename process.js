@@ -39,9 +39,9 @@ function  processStrings(){
       singleAirportJSON.City = itemDeStringed[2]
       singleAirportJSON.Country = itemDeStringed[3]
       singleAirportJSON.ICAO = itemDeStringed[5]
-      singleAirportJSON.Latitude = itemDeStringed[6]
-      singleAirportJSON.Longitude = itemDeStringed[7]
-      singleAirportJSON.Altitude = itemDeStringed[8]
+      singleAirportJSON.Latitude = Number(itemDeStringed[6])
+      singleAirportJSON.Longitude = Number(itemDeStringed[7])
+      singleAirportJSON.Altitude = Number(itemDeStringed[8])
       singleAirportJSON.Timezone = itemDeStringed[9]
       singleAirportJSON.DST = itemDeStringed[10]
       singleAirportJSON.TZ = itemDeStringed[11]
