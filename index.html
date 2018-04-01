@@ -23,7 +23,9 @@ var map = new mapboxgl.Map({
     center: [-74.50, 40], // starting position [lng, lat]
     zoom: 2 // starting zoom
 });
-map.on('load', map.fitBounds(setbbox, {padding:20}))
+var allCoords = getAirportCoords()
+var line = turf.lineString(allCoords)
+map.on('load', map.fitBounds(turf.bbox(line)), {padding:20})
 </script>
 
 </body>
