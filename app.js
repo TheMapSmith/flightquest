@@ -6,7 +6,7 @@ var airports = ['BTV', 'ATL']
 const airportCodes = JSON.parse(fs.readFileSync('data/airportCodes.json', 'utf-8'))
 const airportData = JSON.parse(fs.readFileSync('data/airportData.json', 'utf-8'))
 
-getAirportCoords();
+// getAirportCoords();
 
 function getAirportCoords() {
   var allCoords = []
@@ -30,15 +30,7 @@ function setbbox(allCoords) {
   var line = turf.lineString(allCoords)
   var bbox = turf.bbox(line)
 
-  var sw = new mapboxgl.LngLat(bbox[0],bbox[1])
-  var ne = new mapboxgl.LngLat(bbox[2],bbox[3])
-
-  console.log('sw ' + sw);
-  console.log('ne ' + ne);
-
-  var llb = new mapboxgl.LngLatBounds(sw, ne)
-  console.log('---');
-  console.log(JSON.stringify(llb,null,2));
+  var llb = mapboxgl.LngLatBounds.convert(bbox)
 
   return llb
 
