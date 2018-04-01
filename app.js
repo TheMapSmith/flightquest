@@ -1,4 +1,5 @@
 const fs = require('fs')
+const turf = require('turf')
 
 var airports = ['BTV', 'ATL']
 
@@ -25,9 +26,29 @@ function getAirportCoords() {
 }
 
 function setbbox(allCoords) {
+
+  var line = turf.lineString(allCoords)
+  var bbox = turf.bbox(line)
+
+  var sw = new mapboxgl.LngLat(bbox[0],bbox[1])
+  var ne = new mapboxgl.LngLat(bbox[2],bbox[3])
+
+  console.log('sw ' + sw);
+  console.log('ne ' + ne);
+
+  var llb = new mapboxgl.LngLatBounds(sw, ne)
+  console.log('---');
+  console.log(JSON.stringify(llb,null,2));
+
+  return llb
+
+  // NOTE: https://www.mapbox.com/mapbox-gl-js/api/#lnglatboundslike
+  // Must be [SW, NE]
+
+
   var minlng, maxlng, minlat, maxlat
   var noPairs = allCoords.length
-  if (noPairs == 2) {
+  if (noPairs == 22) {
     var firstPair = allCoords[0]
     var secondPair = allCoords[1]
 
@@ -40,6 +61,8 @@ function setbbox(allCoords) {
     lats.push(firstPair[1])
     lats.push(secondPair[1])
     // TODO: MAX of lats
+
+
 
   } else if (noPairs > 2) {
     // TODO: Probably different logic
