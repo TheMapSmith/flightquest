@@ -7,10 +7,6 @@ body {
   padding: 0;
 }
 
-#map {
-
-}
-
 #fetch {
   display: block;
   position: relative;
@@ -27,7 +23,8 @@ body {
 }
 
 .sidebar {
-  background-color: #999999;
+  background-color: rgb(25,25,25);
+  color: rgb(200,200,200)
 }
 
 #iata-input { margin: 10px;}

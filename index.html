@@ -13,7 +13,7 @@
   <script type="text/javascript" src="jquery/jquery-3.0.0.slim.min.js"></script>
 
   <link rel="stylesheet" href="style.css">
-  <script type="text/javascript" src="app.js"></script>
+
 </head>
 
 <body>
@@ -24,17 +24,17 @@
           <div class="form-group">
             <label for="origin">Origin</label>
             <div class="input-group">
-              <input id="origin" name="origin" placeholder="BTV" type="text" class="form-control here">
+              <input id="origin" name="origin" value="BTV" placeholder="BTV" type="text" class="form-control here">
             </div>
           </div>
           <div class="form-group">
             <label for="dest">Destination</label>
             <div class="input-group">
-              <input id="dest" name="dest" placeholder="AUS" type="text" class="form-control here">
+              <input id="dest" name="dest" value="AUS" placeholder="AUS" type="text" class="form-control here">
             </div>
           </div>
           <div class="form-group">
-            <button name="submit" type="submit" class="btn btn-primary">Submit</button>
+            <button name="submit" type="button" class="btn btn-primary"  id="submit">Submit</button>
           </div>
         </form>
       </div>
@@ -43,41 +43,7 @@
       </div>
     </div>
   </div>
-  <br />
-
-  <script type="text/javascript">
-    var origin = document.getElementById('origin').value
-    var dest = document.getElementById('dest').value
-
-    function drawLines() {
-      console.log(origin);
-      console.log(destination);
-    }
-    document.getElementById('draw').addEventListener('click', drawLines)
-    document.getElementById('fetch').addEventListener('click', fetchRoute)
-  </script>
-
-  <script>
-    mapboxgl.accessToken = "pk.eyJ1IjoidGhlbWFwc21pdGgiLCJhIjoiYTdmMDdiZjYxNzNmNzFiOGVjZDJiYzI5MGQ5N2VlMmQifQ.fUnAp-76Ka0d3v4oMNPhFw";
-    var map = new mapboxgl.Map({
-      container: "map", // container id
-      style: "mapbox://styles/mapbox/streets-v9", // stylesheet location
-      center: [-74.50, 40], // starting position [lng, lat]
-      zoom: 2 // starting zoom
-    });
-    var allCoords = getAirportCoords()
-    var line = turf.lineString(allCoords)
-    var lineFeature = makePathFeature(line)
-
-    map.on('load', function() {
-      map.fitBounds(turf.bbox(line), {
-        padding: 70
-      })
-      map.addLayer(lineFeature)
-    })
-
-    document.getElementById('fetch').addEventListener('click', fetchRoute)
-  </script>
+  <script type="text/javascript" src="app.js"></script>
 
 </body>
 
