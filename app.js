@@ -24,7 +24,6 @@ init()
 
 function init () {
   document.getElementById('submit').addEventListener('click', function() {parseAirportCodes ()})
-  document.getElementById('fetchRoute').addEventListener('click', function() {fetchRoute (origin, dest)})
 }
 
 function parseAirportCodes (origin, dest, callback) {
@@ -53,7 +52,7 @@ function getAirportCoords(airports) {
         allCoords.push(lnglat)
       }
     } else {
-      return makePathFeature(allCoords)
+      return getSchedules()
     }
   }
 }
@@ -78,7 +77,7 @@ function makePathFeature(allCoords) {
   map.addLayer(lineFeature)
 }
 
-function fetchRoute() {
+function getSchedules() {
   var startUnixSecond = moment().subtract(7, 'days').unix()
   var endUnixSecond = moment().subtract(1, 'days').unix()
 
@@ -104,14 +103,61 @@ function fetchRoute() {
       offset: 0
     }
   }).on('success', function(result, response) {
-    console.log(JSON.stringify(result.AirlineFlightSchedulesResult.data,null,2));
+    if (result) {
+      var ident = result.AirlineFlightSchedulesResult.data[0].ident
+      var departureTime = result.AirlineFlightSchedulesResult.data[0].departuretime
+      getFlightID(ident, departureTime)
+    }
+  })
+  .on('failure', function(err) {
+    console.log('failures');
+  })
+  .on('error', function(err) {
+    console.log('eror');
   })
 
-  // get a flight id
+  function getFlightID(ident, departureTime) {
+    console.log("getting ID");
+    restclient.get(fxml_url + 'GetFlightID', {
+      username: username,
+      password: apiKey,
+      query: {
+        ident: ident,
+        departureTime: departureTime
+      }
+    }).on('success', function(result, response) {
+      var FlightID = result.GetFlightIDResult
+      getLastTrack(FlightID)
+    })
+  }
 
-  // get historical track
+  function getLastTrack(FlightID) {
+    console.log('getting track');
+    restclient.get(fxml_url + 'GetHistoricalTrack', {
+      username: username,
+      password: apiKey,
+      query: {
+        faFlightID: FlightID
+      }
+    }).on('success', function(result, response) {
+      var track = result.GetHistoricalTrackResult.data
+      parseTrack(track)
+    })
+  }
 
-  // map historical track
-
+  function parseTrack(track) {
+    console.log('parsing track');
+    var allCoords = []
+    for (var i = 0; i <= track.length; i++) {
+      if (i == track.length) {
+        makePathFeature(allCoords)
+      } else {
+        var pair = []
+        pair.push(track[i].longitude)
+        pair.push(track[i].latitude)
+        allCoords.push(pair)
+      }
+    }
+  }
 
 }
