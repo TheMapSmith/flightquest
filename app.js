@@ -22,11 +22,13 @@ const map = new mapboxgl.Map({
 // page init
 init()
 
-function init () {
-  document.getElementById('submit').addEventListener('click', function() {parseAirportCodes ()})
+function init() {
+  document.getElementById('submit').addEventListener('click', function() {
+    parseAirportCodes()
+  })
 }
 
-function parseAirportCodes (origin, dest, callback) {
+function parseAirportCodes(origin, dest, callback) {
   if (airports.length != 0) {
     var id = airports[0] + ' to ' + airports[1]
     map.removeLayer(id)
@@ -73,7 +75,9 @@ function makePathFeature(allCoords) {
   lineFeature.paint['line-color'] = '#ffdd00'
   lineFeature.paint['line-width'] = 9
 
-  map.fitBounds(turf.bbox(line), {padding: 70})
+  map.fitBounds(turf.bbox(line), {
+    padding: 70
+  })
   map.addLayer(lineFeature)
 }
 
@@ -92,29 +96,29 @@ function getSchedules() {
   // get flights between given airports
 
   restclient.get(fxml_url + 'AirlineFlightSchedules', {
-    username: username,
-    password: apiKey,
-    query: {
-      startDate: startUnixSecond,
-      endDate: endUnixSecond,
-      origin: origin,
-      destination: dest,
-      howMany: 5,
-      offset: 0
-    }
-  }).on('success', function(result, response) {
-    if (result) {
-      var ident = result.AirlineFlightSchedulesResult.data[0].ident
-      var departureTime = result.AirlineFlightSchedulesResult.data[0].departuretime
-      getFlightID(ident, departureTime)
-    }
-  })
-  .on('failure', function(err) {
-    console.log('failures');
-  })
-  .on('error', function(err) {
-    console.log('eror');
-  })
+      username: username,
+      password: apiKey,
+      query: {
+        startDate: startUnixSecond,
+        endDate: endUnixSecond,
+        origin: origin,
+        destination: dest,
+        howMany: 5,
+        offset: 0
+      }
+    }).on('success', function(result, response) {
+      if (result) {
+        var ident = result.AirlineFlightSchedulesResult.data[0].ident
+        var departureTime = result.AirlineFlightSchedulesResult.data[0].departuretime
+        getFlightID(ident, departureTime)
+      }
+    })
+    .on('failure', function(err) {
+      console.log('failures');
+    })
+    .on('error', function(err) {
+      console.log('eror');
+    })
 
   function getFlightID(ident, departureTime) {
     console.log("getting ID");
@@ -159,5 +163,4 @@ function getSchedules() {
       }
     }
   }
-
 }
