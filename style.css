@@ -1,0 +1,33 @@
+html, body {
+  height: 100%
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+
+}
+
+#fetch {
+  display: block;
+  position: relative;
+  margin: 0px auto;
+  width: 25%;
+  height: 40px;
+  padding: 10px;
+  1 border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  text-align: center;
+  color: #fff;
+  background: #ee8a65;
+}
+
+.sidebar {
+  background-color: #999999;
+}
+
+#iata-input { margin: 10px;}
