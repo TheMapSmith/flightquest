@@ -2,6 +2,8 @@ const fs = require('fs')
 const turf = require('turf')
 const mapboxgl = require('mapbox-gl')
 const restclient = require('restler');
+const moment = require('moment');
+moment().format();
 
 const apiKeyFile = require('./keys.js')
 const airportCodes = JSON.parse(fs.readFileSync('data/airportCodes.json', 'utf-8'))
@@ -22,9 +24,10 @@ init()
 
 function init () {
   document.getElementById('submit').addEventListener('click', function() {parseAirportCodes ()})
+  document.getElementById('fetchRoute').addEventListener('click', function() {fetchRoute (origin, dest)})
 }
 
-function  parseAirportCodes (origin, dest, callback) {
+function parseAirportCodes (origin, dest, callback) {
   if (airports.length != 0) {
     var id = airports[0] + ' to ' + airports[1]
     map.removeLayer(id)
@@ -76,48 +79,39 @@ function makePathFeature(allCoords) {
 }
 
 function fetchRoute() {
+  var startUnixSecond = moment().subtract(7, 'days').unix()
+  var endUnixSecond = moment().subtract(1, 'days').unix()
+
+  var origin = document.getElementById('origin').value
+  var dest = document.getElementById('dest').value
+
   console.log('fetching!');
 
   var fxml_url = 'http://flightxml.flightaware.com/json/FlightXML2/';
   var username = 'themapsmith';
   var apiKey = apiKeyFile.apiKey;
+  // get flights between given airports
 
-
-  restclient.get(fxml_url + 'MetarEx', {
+  restclient.get(fxml_url + 'AirlineFlightSchedules', {
     username: username,
     password: apiKey,
     query: {
-      airport: 'KAUS',
-      howMany: 1
-    }
-  }).on('success', function(result, response) {
-    // util.puts(util.inspect(result, true, null));
-    var entry = result.MetarExResult.metar[0];
-    console.log('The temperature at ' + entry.airport + ' is ' + entry.temp_air + 'C');
-  });
-
-  restclient.get(fxml_url + 'Enroute', {
-    username: username,
-    password: apiKey,
-    query: {
-      airport: 'KIAH',
-      howMany: 10,
-      filter: '',
+      startDate: startUnixSecond,
+      endDate: endUnixSecond,
+      origin: origin,
+      destination: dest,
+      howMany: 5,
       offset: 0
     }
   }).on('success', function(result, response) {
-    console.log('Aircraft en route to KIAH:');
-    //util.puts(util.inspect(result, true, null));
-    var flights = result.EnrouteResult.enroute;
-    for (i in flights) {
-      var flight = flights[i];
-      //util.puts(util.inspect(flight));
-      console.log(flight.ident + ' (' + flight.aircrafttype + ')\t' +
-        flight.originName + ' (' + flight.origin + ')');
-    }
-  });
+    console.log(JSON.stringify(result.AirlineFlightSchedulesResult.data,null,2));
+  })
 
+  // get a flight id
 
+  // get historical track
+
+  // map historical track
 
 
 }
