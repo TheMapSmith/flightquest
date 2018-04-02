@@ -1,37 +1,62 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="utf-8" />
-    <title>Display a map</title>
-    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js"></script>
-    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css" rel="stylesheet" />
-    <script type="text/javascript" src="app.js"></script>
-    <style>
-        body { margin:0; padding:0; }
-        #map { position:absolute; top:0; bottom:0; width:100%; }
-    </style>
+  <meta charset="utf-8" />
+  <title>Display a map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js"></script>
+  <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css" rel="stylesheet" />
+  <script type="text/javascript" src="app.js"></script>
+  <style>
+    body { margin: 0;padding: 0;}
+    #map { position:absolute; top:0; bottom:0; width:100%; }
+  </style>
 </head>
+
 <body>
+  <style media="screen">
+      #fetch {
+        display: block;
+        position: relative;
+        margin: 0px auto;
+        width: 25%;
+        height: 40px;
+        padding: 10px;
+        border: none;
+        border-radius: 3px;
+        font-size: 12px;
+        text-align: center;
+        color: #fff;
+        background: #ee8a65;
+      }
+  </style>
+  <div id="map"></div>
+  <br />
+  <button id="fetch">Fetch</button>
 
-<div id="map"></div>
-<script>
-mapboxgl.accessToken = "pk.eyJ1IjoidGhlbWFwc21pdGgiLCJhIjoiYTdmMDdiZjYxNzNmNzFiOGVjZDJiYzI5MGQ5N2VlMmQifQ.fUnAp-76Ka0d3v4oMNPhFw";
-var map = new mapboxgl.Map({
-    container: "map", // container id
-    style: "mapbox://styles/mapbox/streets-v9", // stylesheet location
-    center: [-74.50, 40], // starting position [lng, lat]
-    zoom: 2 // starting zoom
-});
-var allCoords = getAirportCoords()
-var line = turf.lineString(allCoords)
-var lineFeature = makePathFeature(line)
+  <script>
+    mapboxgl.accessToken = "pk.eyJ1IjoidGhlbWFwc21pdGgiLCJhIjoiYTdmMDdiZjYxNzNmNzFiOGVjZDJiYzI5MGQ5N2VlMmQifQ.fUnAp-76Ka0d3v4oMNPhFw";
+    var map = new mapboxgl.Map({
+      container: "map", // container id
+      style: "mapbox://styles/mapbox/streets-v9", // stylesheet location
+      center: [-74.50, 40], // starting position [lng, lat]
+      zoom: 2 // starting zoom
+    });
+    var allCoords = getAirportCoords()
+    var line = turf.lineString(allCoords)
+    var lineFeature = makePathFeature(line)
 
-map.on('load', function () {
-  map.fitBounds(turf.bbox(line)), { padding: 270 }
-  map.addLayer(lineFeature)
-})
-</script>
+    map.on('load', function() {
+      map.fitBounds(turf.bbox(line), {
+        padding: 70
+      })
+      map.addLayer(lineFeature)
+    })
+
+    document.getElementById('fetch').addEventListener('click',fetchRoute)
+  </script>
 
 </body>
+
 </html>
