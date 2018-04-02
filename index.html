@@ -25,7 +25,12 @@ var map = new mapboxgl.Map({
 });
 var allCoords = getAirportCoords()
 var line = turf.lineString(allCoords)
-map.on('load', map.fitBounds(turf.bbox(line)), {padding:20})
+var lineFeature = makePathFeature(line)
+
+map.on('load', function () {
+  map.fitBounds(turf.bbox(line)), { padding: 270 }
+  map.addLayer(lineFeature)
+})
 </script>
 
 </body>
