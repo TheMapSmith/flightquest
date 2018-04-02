@@ -25,6 +25,9 @@ function init () {
 }
 
 function  parseAirportCodes (origin, dest, callback) {
+  if (airports.length != 0) {
+    airports.length = 0
+  }
   var origin = document.getElementById('origin').value
   var dest = document.getElementById('dest').value
 
