@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "mapbox-gl": "^0.44.1",
+    "moment": "^2.22.0",
     "turf": "^3.0.14"
   }
 }
