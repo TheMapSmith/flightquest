@@ -120,47 +120,47 @@ function getSchedules() {
       console.log('eror');
     })
 
-  function getFlightID(ident, departureTime) {
-    console.log("getting ID");
-    restclient.get(fxml_url + 'GetFlightID', {
-      username: username,
-      password: apiKey,
-      query: {
-        ident: ident,
-        departureTime: departureTime
-      }
-    }).on('success', function(result, response) {
-      var FlightID = result.GetFlightIDResult
-      getLastTrack(FlightID)
-    })
-  }
+function getFlightID(ident, departureTime) {
+  console.log("getting ID");
+  restclient.get(fxml_url + 'GetFlightID', {
+    username: username,
+    password: apiKey,
+    query: {
+      ident: ident,
+      departureTime: departureTime
+    }
+  }).on('success', function(result, response) {
+    var FlightID = result.GetFlightIDResult
+    getLastTrack(FlightID)
+  })
+}
 
-  function getLastTrack(FlightID) {
-    console.log('getting track');
-    restclient.get(fxml_url + 'GetHistoricalTrack', {
-      username: username,
-      password: apiKey,
-      query: {
-        faFlightID: FlightID
-      }
-    }).on('success', function(result, response) {
-      var track = result.GetHistoricalTrackResult.data
-      parseTrack(track)
-    })
-  }
+function getLastTrack(FlightID) {
+  console.log('getting track');
+  restclient.get(fxml_url + 'GetHistoricalTrack', {
+    username: username,
+    password: apiKey,
+    query: {
+      faFlightID: FlightID
+    }
+  }).on('success', function(result, response) {
+    var track = result.GetHistoricalTrackResult.data
+    parseTrack(track)
+  })
+}
 
-  function parseTrack(track) {
-    console.log('parsing track');
-    var allCoords = []
-    for (var i = 0; i <= track.length; i++) {
-      if (i == track.length) {
-        makePathFeature(allCoords)
-      } else {
-        var pair = []
-        pair.push(track[i].longitude)
-        pair.push(track[i].latitude)
-        allCoords.push(pair)
-      }
+function parseTrack(track) {
+  console.log('parsing track');
+  var allCoords = []
+  for (var i = 0; i <= track.length; i++) {
+    if (i == track.length) {
+      makePathFeature(allCoords)
+    } else {
+      var pair = []
+      pair.push(track[i].longitude)
+      pair.push(track[i].latitude)
+      allCoords.push(pair)
     }
   }
+}
 }
