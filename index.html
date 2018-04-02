@@ -7,33 +7,55 @@
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
   <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js"></script>
   <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css" rel="stylesheet" />
+
+  <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+  <script type="text/javascript" src="bootstrap/css/bootstrap.min.css"></script>
+  <script type="text/javascript" src="jquery/jquery-3.0.0.slim.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
   <script type="text/javascript" src="app.js"></script>
-  <style>
-    body { margin: 0;padding: 0;}
-    #map { position:absolute; top:0; bottom:0; width:100%; }
-  </style>
 </head>
 
 <body>
-  <style media="screen">
-      #fetch {
-        display: block;
-        position: relative;
-        margin: 0px auto;
-        width: 25%;
-        height: 40px;
-        padding: 10px;
-        border: none;
-        border-radius: 3px;
-        font-size: 12px;
-        text-align: center;
-        color: #fff;
-        background: #ee8a65;
-      }
-  </style>
-  <div id="map"></div>
+  <div class="h-100">
+    <div class="row no-gutters h-100">
+      <div class="col-4 h-100 sidebar">
+        <form id="iata-input">
+          <div class="form-group">
+            <label for="origin">Origin</label>
+            <div class="input-group">
+              <input id="origin" name="origin" placeholder="BTV" type="text" class="form-control here">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="dest">Destination</label>
+            <div class="input-group">
+              <input id="dest" name="dest" placeholder="AUS" type="text" class="form-control here">
+            </div>
+          </div>
+          <div class="form-group">
+            <button name="submit" type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </form>
+      </div>
+      <div class="col-8 h-100">
+        <div id="map" class="h-100"></div>
+      </div>
+    </div>
+  </div>
   <br />
-  <button id="fetch">Fetch</button>
+
+  <script type="text/javascript">
+    var origin = document.getElementById('origin').value
+    var dest = document.getElementById('dest').value
+
+    function drawLines() {
+      console.log(origin);
+      console.log(destination);
+    }
+    document.getElementById('draw').addEventListener('click', drawLines)
+    document.getElementById('fetch').addEventListener('click', fetchRoute)
+  </script>
 
   <script>
     mapboxgl.accessToken = "pk.eyJ1IjoidGhlbWFwc21pdGgiLCJhIjoiYTdmMDdiZjYxNzNmNzFiOGVjZDJiYzI5MGQ5N2VlMmQifQ.fUnAp-76Ka0d3v4oMNPhFw";
@@ -54,7 +76,7 @@
       map.addLayer(lineFeature)
     })
 
-    document.getElementById('fetch').addEventListener('click',fetchRoute)
+    document.getElementById('fetch').addEventListener('click', fetchRoute)
   </script>
 
 </body>
