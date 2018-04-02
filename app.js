@@ -26,6 +26,8 @@ function init () {
 
 function  parseAirportCodes (origin, dest, callback) {
   if (airports.length != 0) {
+    var id = airports[0] + ' to ' + airports[1]
+    map.removeLayer(id)
     airports.length = 0
   }
   var origin = document.getElementById('origin').value
