@@ -7,9 +7,33 @@ const apiKeyFile = require('./keys.js')
 const airportCodes = JSON.parse(fs.readFileSync('data/airportCodes.json', 'utf-8'))
 const airportData = JSON.parse(fs.readFileSync('data/airportData.json', 'utf-8'))
 
-var airports = ['BTV', 'ATL', 'AUS', 'EWR', 'BTV']
+const airports = []
 
-function getAirportCoords() {
+mapboxgl.accessToken = "pk.eyJ1IjoidGhlbWFwc21pdGgiLCJhIjoiYTdmMDdiZjYxNzNmNzFiOGVjZDJiYzI5MGQ5N2VlMmQifQ.fUnAp-76Ka0d3v4oMNPhFw";
+const map = new mapboxgl.Map({
+  container: "map", // container id
+  style: "mapbox://styles/mapbox/dark-v9", // stylesheet location
+  center: [-74.50, 40], // starting position [lng, lat]
+  zoom: 2 // starting zoom
+});
+
+// page init
+init()
+
+function init () {
+  document.getElementById('submit').addEventListener('click', function() {parseAirportCodes ()})
+}
+
+function  parseAirportCodes (origin, dest, callback) {
+  var origin = document.getElementById('origin').value
+  var dest = document.getElementById('dest').value
+
+  airports.push(origin)
+  airports.push(dest)
+  getAirportCoords(airports)
+}
+
+function getAirportCoords(airports) {
   var allCoords = []
   for (var i = 0; i <= airports.length; i++) {
     if (i != airports.length) {
@@ -21,12 +45,13 @@ function getAirportCoords() {
         allCoords.push(lnglat)
       }
     } else {
-      return allCoords
+      return makePathFeature(allCoords)
     }
   }
 }
 
-function makePathFeature(line) {
+function makePathFeature(allCoords) {
+  var line = turf.lineString(allCoords)
   var lineFeature = {}
   lineFeature.id = airports[0] + ' to ' + airports[1]
   lineFeature.type = 'line'
@@ -41,7 +66,8 @@ function makePathFeature(line) {
   lineFeature.paint['line-color'] = '#ffdd00'
   lineFeature.paint['line-width'] = 9
 
-  return lineFeature
+  map.fitBounds(turf.bbox(line), {padding: 70})
+  map.addLayer(lineFeature)
 }
 
 function fetchRoute() {
