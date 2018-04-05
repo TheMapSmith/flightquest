@@ -15,7 +15,7 @@ const apiKey = apiKeyFile.apiKey;
 
 const airports = []
 
-const devFlag = true
+const devFlag = false
 var AirlineFlightSchedules = {}
 var GetFlightID = {}
 var GetHistoricalTrackResult = {}
@@ -93,13 +93,7 @@ function getSchedules() {
       if (result) {
         var ident = result.AirlineFlightSchedulesResult.data[0].ident
         var departureTime = result.AirlineFlightSchedulesResult.data[0].departuretime
-
-        if (fs.statSync('data/AirlineFlightSchedules.json')) {
           getFlightID(ident, departureTime)
-        }
-        else {
-          fs.writeFile('data/AirlineFlightSchedules.json', JSON.stringify(result), 'utf-8', getFlightID(ident, departureTime))
-        }
 
       }
     })
