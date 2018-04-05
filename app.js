@@ -21,6 +21,7 @@ var GetFlightID = {}
 var GetHistoricalTrackResult = {}
 
 if (devFlag) {
+  var targetPoint, originPoint, bearing
   AirlineFlightSchedules = JSON.parse(fs.readFileSync('data/AirlineFlightSchedules.json', 'utf-8'))
   GetFlightID = JSON.parse(fs.readFileSync('data/GetFlightID.json', 'utf-8'))
   GetHistoricalTrackResult = JSON.parse(fs.readFileSync('data/GetHistoricalTrackResult.json', 'utf-8'))
@@ -40,6 +41,10 @@ init()
 function init() {
   document.getElementById('submit').addEventListener('click', function() {
     parseAirportCodes()
+  })
+
+  document.getElementById('beginFlight').addEventListener('click', function() {
+    beginFlight()
   })
 }
 
@@ -161,7 +166,8 @@ function parseTrack(track) {
 function makePathFeature(allCoords) {
   var line = turf.lineString(allCoords)
   var lineFeature = {}
-  lineFeature.id = airports[0] + ' to ' + airports[1]
+  var pathFeatureID = airports[0] + ' to ' + airports[1]
+  lineFeature.id = pathFeatureID
   lineFeature.type = 'line'
   lineFeature.source = {}
   lineFeature.source.type = "geojson"
@@ -174,15 +180,35 @@ function makePathFeature(allCoords) {
   lineFeature.paint['line-color'] = '#ffdd00'
   lineFeature.paint['line-width'] = 9
 
-  map.fitBounds(turf.bbox(line), {
-    padding: 70
-  });
-  map.addLayer(lineFeature);
-  var targetPoint = lineFeature.
-  // var camera = {
-  //   duration: 1000,
-  //   easing: 1,
-  //   offset: 2
-  // }
-  map.easeTo(camera, lineFeature);
+  // map.fitBounds(turf.bbox(line), {
+  //   padding: 70
+  // });
+
+  if (!map.getLayer(pathFeatureID)) {
+    map.addLayer(lineFeature);
+  }
+
+
+  var targetPoint = turf.point(allCoords.pop())
+  var originPoint = turf.point(allCoords[0])
+  var bearing = turf.bearing(originPoint, targetPoint)
+
+  map.flyTo({
+    center: originPoint.geometry.coordinates,
+    zoom: 7,
+    bearing: bearing,
+    pitch: 80
+  })
+}
+
+function beginFlight () {
+
+  var ewr = [-74.1333312988, 40.7333335876]
+  var options = {
+    duration: 10000,
+    animate: true
+  }
+
+  map.panTo(ewr, options)
+
 }
