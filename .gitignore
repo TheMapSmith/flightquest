@@ -1,5 +1,5 @@
 node_modules/
-data/
+data/_dev
 keys.js
 bootstrap/
 jquery/
