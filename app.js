@@ -135,9 +135,11 @@ function getLastTrack(FlightID) {
         faFlightID: FlightID
       }
     }).on('success', function(result, response) {
-      var track = result.GetHistoricalTrackResult.data
-      console.log(JSON.stringify(result,null,2));
-      parseTrack(track)
+        var track = result.GetHistoricalTrackResult.data
+        parseTrack(track)
+    })
+    .on('error', function(error){
+      console.log(error);
     })
   }
 }
