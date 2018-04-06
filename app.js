@@ -189,6 +189,11 @@ function makePathFeature(allCoords) {
   var originPoint = turf.point(allCoords[0])
   var bearing = turf.bearing(originPoint, targetPoint)
 
+  sessionStorage.setItem("targetPoint", JSON.stringify(targetPoint));
+  sessionStorage.setItem("originPoint", originPoint);
+  sessionStorage.setItem("bearing", bearing);
+
+
   map.flyTo({
     center: originPoint.geometry.coordinates,
     zoom: 7,
@@ -199,12 +204,12 @@ function makePathFeature(allCoords) {
 
 function beginFlight () {
 
-  var ewr = [-74.1333312988, 40.7333335876]
+  var target = JSON.parse(sessionStorage.targetPoint)
   var options = {
     duration: 10000,
     animate: true
   }
 
-  map.panTo(ewr, options)
+  map.panTo(target.geometry.coordinates, options)
 
 }
