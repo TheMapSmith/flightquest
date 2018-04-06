@@ -13,20 +13,6 @@ const fxml_url = 'http://flightxml.flightaware.com/json/FlightXML2/';
 const username = 'themapsmith';
 const apiKey = apiKeyFile.apiKey;
 
-const airports = []
-
-const devFlag = false
-var AirlineFlightSchedules = {}
-var GetFlightID = {}
-var GetHistoricalTrackResult = {}
-
-if (devFlag) {
-  var targetPoint, originPoint, bearing
-  AirlineFlightSchedules = JSON.parse(fs.readFileSync('data/AirlineFlightSchedules.json', 'utf-8'))
-  GetFlightID = JSON.parse(fs.readFileSync('data/GetFlightID.json', 'utf-8'))
-  GetHistoricalTrackResult = JSON.parse(fs.readFileSync('data/GetHistoricalTrackResult.json', 'utf-8'))
-}
-
 mapboxgl.accessToken = "pk.eyJ1IjoidGhlbWFwc21pdGgiLCJhIjoiYTdmMDdiZjYxNzNmNzFiOGVjZDJiYzI5MGQ5N2VlMmQifQ.fUnAp-76Ka0d3v4oMNPhFw";
 const map = new mapboxgl.Map({
   container: "map", // container id
@@ -40,7 +26,7 @@ init()
 
 function init() {
   document.getElementById('submit').addEventListener('click', function() {
-    parseAirportCodes()
+    getSchedules()
   })
 
   document.getElementById('beginFlight').addEventListener('click', function() {
@@ -48,36 +34,27 @@ function init() {
   })
 }
 
-function parseAirportCodes(origin, dest) {
-  if (airports.length != 0) {
-    var id = airports[0] + ' to ' + airports[1]
-    map.removeLayer(id)
-    airports.length = 0
-  }
-  var origin = document.getElementById('origin').value
-  var dest = document.getElementById('dest').value
-
-  airports.push(origin)
-  airports.push(dest)
-  getSchedules()
-}
-
 function getSchedules() {
-  if (devFlag) {
-    var ident = AirlineFlightSchedules.AirlineFlightSchedulesResult.data[0].ident
-    var departureTime = AirlineFlightSchedules.AirlineFlightSchedulesResult.data[0].departuretime
+  // set O/D and store in session storage
+  var origin = document.getElementById('origin').value
+  sessionStorage.setItem('origin', origin)
+  var dest = document.getElementById('dest').value
+  sessionStorage.setItem('dest', dest)
+  // for not making API calls in dev
+  if (origin == 'AUS' && dest == 'EWR') {
+    console.log('Reading schedule from local storage');
+    ausewr = JSON.parse(fs.readFileSync('storage/AUS-EWR-1522422120.json', 'utf-8'))
+    var randomRoute = Math.floor(Math.random() * 5)
+    var ident = ausewr.AirlineFlightSchedulesResult.data[randomRoute].ident
+    var departureTime = ausewr.AirlineFlightSchedulesResult.data[randomRoute].departuretime
     getFlightID(ident, departureTime)
   } else {
     var startUnixSecond = moment().subtract(7, 'days').unix()
     var endUnixSecond = moment().subtract(1, 'days').unix()
 
-    var origin = document.getElementById('origin').value
-    var dest = document.getElementById('dest').value
-
-    console.log('fetching!');
+    console.log('Fetching flights between ' + origin + ' and ' + dest);
 
     // get flights between given airports
-
     restclient.get(fxml_url + 'AirlineFlightSchedules', {
       username: username,
       password: apiKey,
@@ -93,15 +70,18 @@ function getSchedules() {
       if (result) {
         var ident = result.AirlineFlightSchedulesResult.data[0].ident
         var departureTime = result.AirlineFlightSchedulesResult.data[0].departuretime
-          getFlightID(ident, departureTime)
-
+        var filename = 'storage/' + origin + '-' + dest + '-' + departureTime + '.json'
+        fs.writeFile(filename, JSON.stringify(result), getFlightID(ident, departureTime))
       }
     })
   }
 }
 
 function getFlightID(ident, departureTime) {
-  if (devFlag) {
+  var filename = 'storage/' + ident + '-' + departureTime + '.json'
+  if (fs.existsSync(filename)) {
+    console.log('Getting FlightID from local storage');
+    var GetFlightID = JSON.parse(fs.readFileSync(filename, 'utf-8'))
     var FlightID = GetFlightID.GetFlightIDResult
     getLastTrack(FlightID)
   } else {
@@ -115,15 +95,16 @@ function getFlightID(ident, departureTime) {
       }
     }).on('success', function(result, response) {
       var FlightID = result.GetFlightIDResult
-
-      console.log(JSON.stringify(result,null,2))
-      getLastTrack(FlightID)
+      fs.writeFile(filename, JSON.stringify(result,null,2), getLastTrack(FlightID))
     })
   }
 }
 
 function getLastTrack(FlightID) {
-  if (devFlag) {
+  var filename = 'storage/' + FlightID + '.json'
+  if (fs.existsSync(filename)) {
+    console.log('Reading track from local storage');
+    var GetHistoricalTrackResult = JSON.parse(fs.readFileSync(filename, 'utf-8'))
     var track = GetHistoricalTrackResult.GetHistoricalTrackResult.data
     parseTrack(track)
   } else {
@@ -136,7 +117,7 @@ function getLastTrack(FlightID) {
       }
     }).on('success', function(result, response) {
         var track = result.GetHistoricalTrackResult.data
-        parseTrack(track)
+        fs.writeFile(filename, JSON.stringify(result,null,2), parseTrack(track))
     })
     .on('error', function(error){
       console.log(error);
@@ -162,7 +143,7 @@ function parseTrack(track) {
 function makePathFeature(allCoords) {
   var line = turf.lineString(allCoords)
   var lineFeature = {}
-  var pathFeatureID = airports[0] + ' to ' + airports[1]
+  var pathFeatureID = origin + ' to ' + dest
   lineFeature.id = pathFeatureID
   lineFeature.type = 'line'
   lineFeature.source = {}
@@ -176,14 +157,9 @@ function makePathFeature(allCoords) {
   lineFeature.paint['line-color'] = '#ffdd00'
   lineFeature.paint['line-width'] = 9
 
-  // map.fitBounds(turf.bbox(line), {
-  //   padding: 70
-  // });
-
   if (!map.getLayer(pathFeatureID)) {
     map.addLayer(lineFeature);
   }
-
 
   var targetPoint = turf.point(allCoords.pop())
   var originPoint = turf.point(allCoords[0])
@@ -192,7 +168,6 @@ function makePathFeature(allCoords) {
   sessionStorage.setItem("targetPoint", JSON.stringify(targetPoint));
   sessionStorage.setItem("originPoint", originPoint);
   sessionStorage.setItem("bearing", bearing);
-
 
   map.flyTo({
     center: originPoint.geometry.coordinates,
