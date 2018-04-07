@@ -95,7 +95,7 @@ function getFlightID(ident, departureTime) {
       }
     }).on('success', function(result, response) {
       var FlightID = result.GetFlightIDResult
-      fs.writeFile(filename, JSON.stringify(result,null,2), getLastTrack(FlightID))
+      fs.writeFile(filename, JSON.stringify(result, null, 2), getLastTrack(FlightID))
     })
   }
 }
@@ -110,18 +110,18 @@ function getLastTrack(FlightID) {
   } else {
     console.log('getting track');
     restclient.get(fxml_url + 'GetHistoricalTrack', {
-      username: username,
-      password: apiKey,
-      query: {
-        faFlightID: FlightID
-      }
-    }).on('success', function(result, response) {
+        username: username,
+        password: apiKey,
+        query: {
+          faFlightID: FlightID
+        }
+      }).on('success', function(result, response) {
         var track = result.GetHistoricalTrackResult.data
-        fs.writeFile(filename, JSON.stringify(result,null,2), parseTrack(track))
-    })
-    .on('error', function(error){
-      console.log(error);
-    })
+        fs.writeFile(filename, JSON.stringify(result, null, 2), parseTrack(track))
+      })
+      .on('error', function(error) {
+        console.log(error);
+      })
   }
 }
 
@@ -180,7 +180,7 @@ function makePathFeature(allCoords) {
   })
 }
 
-function beginFlight () {
+function beginFlight() {
 
   var target = JSON.parse(sessionStorage.targetPoint)
   var coordinates = JSON.parse(sessionStorage.allCoords)
@@ -188,16 +188,19 @@ function beginFlight () {
 
   line.geometry.coordinates = [coordinates[0]]
 
-  map.addSource('trace', { type: 'geojson', data: line });
+  map.addSource('trace', {
+    type: 'geojson',
+    data: line
+  });
   map.addLayer({
-      "id": "trace",
-      "type": "line",
-      "source": "trace",
-      "paint": {
-          "line-color": "yellow",
-          "line-opacity": 0.85,
-          "line-width": 12
-      }
+    "id": "trace",
+    "type": "line",
+    "source": "trace",
+    "paint": {
+      "line-color": "yellow",
+      "line-opacity": 0.85,
+      "line-width": 12
+    }
   });
 
   var aniOptions = {
@@ -207,13 +210,13 @@ function beginFlight () {
   // on a regular basis, add more coordinates from the saved list and update the map
   var i = 0;
   var timer = window.setInterval(function() {
-     if (i < coordinates.length) {
-         line.geometry.coordinates.push(coordinates[i]);
-         map.getSource('trace').setData(line);
-         map.panTo(coordinates[i],aniOptions);
-         i++;
-     } else {
-         window.clearInterval(timer);
-     }
+    if (i < coordinates.length) {
+      line.geometry.coordinates.push(coordinates[i]);
+      map.getSource('trace').setData(line);
+      map.panTo(coordinates[i], aniOptions);
+      i++;
+    } else {
+      window.clearInterval(timer);
+    }
   }, 250);
 }
