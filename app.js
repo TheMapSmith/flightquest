@@ -213,7 +213,17 @@ function beginFlight() {
     if (i < coordinates.length) {
       line.geometry.coordinates.push(coordinates[i]);
       map.getSource('trace').setData(line);
-      map.panTo(coordinates[i], aniOptions);
+      var prevCoord = coordinates[i-1]
+      if (prevCoord) {
+        map.easeTo({
+          center: coordinates[i],
+          duration: 1000,
+          bearing: turf.bearing(prevCoord, coordinates[i]),
+          easing: function (t) { return t; },
+          animate: true
+        })
+      }
+      // map.panTo(coordinates[i], aniOptions);
       i++;
     } else {
       window.clearInterval(timer);
