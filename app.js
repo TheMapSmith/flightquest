@@ -141,7 +141,9 @@ function parseTrack(track) {
 }
 
 function makePathFeature(allCoords) {
+  sessionStorage.setItem('allCoords', JSON.stringify(allCoords))
   var line = turf.lineString(allCoords)
+  sessionStorage.setItem('flightPath', JSON.stringify(line))
   var lineFeature = {}
   var pathFeatureID = origin + ' to ' + dest
   lineFeature.id = pathFeatureID
@@ -156,6 +158,7 @@ function makePathFeature(allCoords) {
   lineFeature.paint = {}
   lineFeature.paint['line-color'] = '#ffdd00'
   lineFeature.paint['line-width'] = 9
+  lineFeature.paint['line-opacity'] = 0.25
 
   if (!map.getLayer(pathFeatureID)) {
     map.addLayer(lineFeature);
@@ -180,11 +183,37 @@ function makePathFeature(allCoords) {
 function beginFlight () {
 
   var target = JSON.parse(sessionStorage.targetPoint)
-  var options = {
-    duration: 10000,
-    animate: true
+  var coordinates = JSON.parse(sessionStorage.allCoords)
+  var line = JSON.parse(sessionStorage.flightPath)
+
+  line.geometry.coordinates = [coordinates[0]]
+
+  map.addSource('trace', { type: 'geojson', data: line });
+  map.addLayer({
+      "id": "trace",
+      "type": "line",
+      "source": "trace",
+      "paint": {
+          "line-color": "yellow",
+          "line-opacity": 0.85,
+          "line-width": 12
+      }
+  });
+
+  var aniOptions = {
+    duration: 1000
   }
 
-  map.panTo(target.geometry.coordinates, options)
-
+  // on a regular basis, add more coordinates from the saved list and update the map
+  var i = 0;
+  var timer = window.setInterval(function() {
+     if (i < coordinates.length) {
+         line.geometry.coordinates.push(coordinates[i]);
+         map.getSource('trace').setData(line);
+         map.panTo(coordinates[i],aniOptions);
+         i++;
+     } else {
+         window.clearInterval(timer);
+     }
+  }, 250);
 }
