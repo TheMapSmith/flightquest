@@ -23,8 +23,8 @@
     "restler": "^3.4.0"
   },
   "dependencies": {
+    "@turf/turf": "^5.1.6",
     "mapbox-gl": "^0.44.1",
-    "moment": "^2.22.0",
-    "turf": "^3.0.14"
+    "moment": "^2.22.0"
   }
 }
