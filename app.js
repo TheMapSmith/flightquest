@@ -1,5 +1,5 @@
 const fs = require('fs')
-const turf = require('turf')
+const turf = require('@turf/turf')
 const mapboxgl = require('mapbox-gl')
 const restclient = require('restler');
 const moment = require('moment');
@@ -8,6 +8,8 @@ moment().format();
 const apiKeyFile = require('./keys.js')
 const airportCodes = JSON.parse(fs.readFileSync('data/airportCodes.json', 'utf-8'))
 const airportData = JSON.parse(fs.readFileSync('data/airportData.json', 'utf-8'))
+
+var FlightID
 
 const fxml_url = 'http://flightxml.flightaware.com/json/FlightXML2/';
 const username = 'themapsmith';
@@ -82,7 +84,7 @@ function getFlightID(ident, departureTime) {
   if (fs.existsSync(filename)) {
     console.log('Getting FlightID from local storage');
     var GetFlightID = JSON.parse(fs.readFileSync(filename, 'utf-8'))
-    var FlightID = GetFlightID.GetFlightIDResult
+    FlightID = GetFlightID.GetFlightIDResult
     getLastTrack(FlightID)
   } else {
     console.log("getting ID");
@@ -95,6 +97,7 @@ function getFlightID(ident, departureTime) {
       }
     }).on('success', function(result, response) {
       var FlightID = result.GetFlightIDResult
+      sessionStorage.setItem('FlightID', JSON.stringify(FlightID,null,2))
       fs.writeFile(filename, JSON.stringify(result, null, 2), getLastTrack(FlightID))
     })
   }
@@ -106,6 +109,7 @@ function getLastTrack(FlightID) {
     console.log('Reading track from local storage');
     var GetHistoricalTrackResult = JSON.parse(fs.readFileSync(filename, 'utf-8'))
     var track = GetHistoricalTrackResult.GetHistoricalTrackResult.data
+    // addPolys(FlightID)
     parseTrack(track)
   } else {
     console.log('getting track');
@@ -117,7 +121,9 @@ function getLastTrack(FlightID) {
         }
       }).on('success', function(result, response) {
         var track = result.GetHistoricalTrackResult.data
-        fs.writeFile(filename, JSON.stringify(result, null, 2), parseTrack(track))
+        fs.writeFile(filename, JSON.stringify(result, null, 2), addPolys(FlightID))
+        // TODO:  Future: pass path to the path-polys function
+        // while in dev, just grab the polys and plop them in the map
       })
       .on('error', function(error) {
         console.log(error);
@@ -127,23 +133,34 @@ function getLastTrack(FlightID) {
 
 function parseTrack(track) {
   console.log('parsing track');
-  var allCoords = []
+  var trackInfo = []
+  var lineCoords = []
   for (var i = 0; i <= track.length; i++) {
     if (i == track.length) {
-      makePathFeature(allCoords)
+      sessionStorage.setItem('trackInfo', JSON.stringify(trackInfo))
+      makePathFeature(trackInfo, lineCoords)
     } else {
+      var each = {}
       var pair = []
-      pair.push(track[i].longitude)
-      pair.push(track[i].latitude)
-      allCoords.push(pair)
+      pair.push(Number(track[i].longitude))
+      pair.push(Number(track[i].latitude))
+      each.pair = pair
+      each.properties = {}
+      each.properties.altitude = track[i].altitude * 100
+      each.properties.timestamp = track[i].timestamp
+      each.properties.groundspeed = track[i].groundspeed
+
+      trackInfo.push(each)
+      lineCoords.push(pair)
     }
   }
 }
 
-function makePathFeature(allCoords) {
-  sessionStorage.setItem('allCoords', JSON.stringify(allCoords))
-  var line = turf.lineString(allCoords)
+function makePathFeature(trackInfo, lineCoords) {
+  // make simple line
+  var line = turf.lineString(lineCoords)
   sessionStorage.setItem('flightPath', JSON.stringify(line))
+  // set necessary line attributes for rendering
   var lineFeature = {}
   var pathFeatureID = origin + ' to ' + dest
   lineFeature.id = pathFeatureID
@@ -159,31 +176,84 @@ function makePathFeature(allCoords) {
   lineFeature.paint['line-color'] = '#ffdd00'
   lineFeature.paint['line-width'] = 9
   lineFeature.paint['line-opacity'] = 0.25
-
+  // add line to map
   if (!map.getLayer(pathFeatureID)) {
     map.addLayer(lineFeature);
   }
-
-  var targetPoint = turf.point(allCoords.pop())
-  var originPoint = turf.point(allCoords[0])
+  // determine initial view bearing from start/end coords
+  var targetPoint = turf.point(lineCoords.pop())
+  var originPoint = turf.point(lineCoords[0])
   var bearing = turf.bearing(originPoint, targetPoint)
-
-  sessionStorage.setItem("targetPoint", JSON.stringify(targetPoint));
-  sessionStorage.setItem("originPoint", originPoint);
-  sessionStorage.setItem("bearing", bearing);
-
+  // fly to initial view
   map.flyTo({
     center: originPoint.geometry.coordinates,
     zoom: 7,
     bearing: bearing,
-    pitch: 80
+    pitch: 50
+  })
+
+  makePointFeatures(trackInfo)
+}
+
+function makePointFeatures(trackInfo){
+  // make an array of turf.point objects
+  var points = []
+  for (var i = 0; i <= trackInfo.length; i++) {
+    if (i == trackInfo.length) {
+      bufferPoints(points)
+    } else {
+      var point = turf.point(trackInfo[i].pair, trackInfo[i].properties)
+      points.push(point)
+    }
+  }
+}
+
+function bufferPoints(points){
+  var geojson = {
+    'type': 'FeatureCollection',
+    'features': []
+  }
+
+  for (var j = 0; j <= points.length; j++) {
+    if (j == points.length) {
+      var filename = 'storage/' + FlightID + '-polys.json'
+      if (fs.existsSync(filename)) {
+        addPolys(geojson)
+      } else {
+        fs.writeFile(filename, JSON.stringify(geojson, null, 2), 'utf-8', addPolys(geojson))
+      }
+    } else {
+      var buffered = turf.buffer(points[j], 1, { units: 'miles' });
+      geojson.features.push(buffered)
+    }
+  }
+}
+
+function addPolys(geojson) {
+
+  var extrudedProperties = {
+    // See the Mapbox Style Specification for details on data expressions.
+    // https://www.mapbox.com/mapbox-gl-js/style-spec/#expressions
+    'fill-extrusion-color': 'yellow',
+    'fill-extrusion-height': ['get', 'altitude'],
+    'fill-extrusion-opacity': 0.5
+  };
+
+  map.addLayer({
+    "id": FlightID,
+    "type": "fill-extrusion",
+    "properties": {},
+    "paint": extrudedProperties,
+    "source": {
+      "type": 'geojson',
+      "data": geojson
+    }
   })
 }
 
 function beginFlight() {
-
-  var target = JSON.parse(sessionStorage.targetPoint)
-  var coordinates = JSON.parse(sessionStorage.allCoords)
+  var flightPath = JSON.parse(sessionStorage.flightPath)
+  var coordinates = flightPath.geometry.coordinates
   var line = JSON.parse(sessionStorage.flightPath)
 
   line.geometry.coordinates = [coordinates[0]]
@@ -214,11 +284,12 @@ function beginFlight() {
       line.geometry.coordinates.push(coordinates[i]);
       map.getSource('trace').setData(line);
       var prevCoord = coordinates[i-1]
+
       if (prevCoord) {
         map.easeTo({
           center: coordinates[i],
           duration: 1000,
-          bearing: turf.bearing(prevCoord, coordinates[i]),
+          bearing: turf.bearing(prevCoord, coordinates[i]) - 90,
           easing: function (t) { return t; },
           animate: true
         })
