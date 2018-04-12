@@ -189,7 +189,7 @@ function makePathFeature(trackInfo, lineCoords) {
     center: originPoint.geometry.coordinates,
     zoom: 7,
     bearing: bearing,
-    pitch: 50
+    pitch: 60
   })
 
   makePointFeatures(trackInfo)
@@ -200,6 +200,7 @@ function makePointFeatures(trackInfo){
   var points = []
   for (var i = 0; i <= trackInfo.length; i++) {
     if (i == trackInfo.length) {
+      sessionStorage.setItem('points', JSON.stringify(points))
       bufferPoints(points)
     } else {
       var point = turf.point(trackInfo[i].pair, trackInfo[i].properties)
@@ -258,6 +259,8 @@ function beginFlight() {
 
   line.geometry.coordinates = [coordinates[0]]
 
+  // TODO: fly straight to the first point at z20
+
   map.addSource('trace', {
     type: 'geojson',
     data: line
@@ -280,7 +283,33 @@ function beginFlight() {
   // on a regular basis, add more coordinates from the saved list and update the map
   var i = 0;
   var timer = window.setInterval(function() {
+    var points = JSON.parse(sessionStorage.points)
     if (i < coordinates.length) {
+      var around = points[i].geometry.coordinates
+      var alt = points[i].properties.altitude
+      var zoom = 10
+      // make sure there is an altitude value
+      if (alt) {
+        // set zoom level by alt
+        if (alt < 1000) {
+          zoom = 20
+        } else if (alt > 1000 && alt < 2000) {
+          zoom = 15
+        } else if (alt > 2000 && alt < 8000) {
+          zoom = 12
+        } else if (alt > 8000 && alt < 12000) {
+          zoom = 11
+        } else if (alt > 12000 && alt < 15000) {
+          zoom = 10
+        } else if (alt > 15000 && alt < 25000) {
+          zoom = 9
+        } else if (alt > 25000) {
+          zoom = 8.5
+        } else {
+          console.log('something else ');
+        }
+      }
+
       line.geometry.coordinates.push(coordinates[i]);
       map.getSource('trace').setData(line);
       var prevCoord = coordinates[i-1]
@@ -288,6 +317,7 @@ function beginFlight() {
       if (prevCoord) {
         map.easeTo({
           center: coordinates[i],
+          zoom: zoom,
           duration: 1000,
           bearing: turf.bearing(prevCoord, coordinates[i]) - 90,
           easing: function (t) { return t; },
@@ -299,5 +329,5 @@ function beginFlight() {
     } else {
       window.clearInterval(timer);
     }
-  }, 250);
+  }, 500);
 }
