@@ -159,7 +159,14 @@ function parseTrack(track) {
 function makePathFeature(trackInfo, lineCoords) {
   // make simple line
   var line = turf.lineString(lineCoords)
+  var rightLine = turf.lineOffset(line, 300000, {units: 'feet'})
+  rightLine.properties.name = 'left line'
+  var leftLine = turf.lineOffset(line, -300000, {units: 'feet'})
+  leftLine.properties.name = 'right line'
+
   sessionStorage.setItem('flightPath', JSON.stringify(line))
+  sessionStorage.setItem('leftLine', JSON.stringify(leftLine))
+  sessionStorage.setItem('rightLine', JSON.stringify(rightLine))
   // set necessary line attributes for rendering
   var lineFeature = {}
   var pathFeatureID = origin + ' to ' + dest
@@ -253,9 +260,9 @@ function addPolys(geojson) {
 }
 
 function beginFlight() {
-  var flightPath = JSON.parse(sessionStorage.flightPath)
-  var coordinates = flightPath.geometry.coordinates
-  var line = JSON.parse(sessionStorage.flightPath)
+  var leftLine = JSON.parse(sessionStorage.leftLine)
+  var coordinates = leftLine.geometry.coordinates
+  var line = JSON.parse(sessionStorage.leftLine)
 
   line.geometry.coordinates = [coordinates[0]]
 
@@ -296,17 +303,17 @@ function beginFlight() {
         } else if (alt > 1000 && alt < 2000) {
           zoom = 15
         } else if (alt > 2000 && alt < 8000) {
-          zoom = 12
+          zoom = 13
         } else if (alt > 8000 && alt < 12000) {
-          zoom = 11
+          zoom = 12
         } else if (alt > 12000 && alt < 15000) {
-          zoom = 10
+          zoom = 11
         } else if (alt > 15000 && alt < 25000) {
-          zoom = 9
+          zoom = 10
         } else if (alt > 25000) {
-          zoom = 8.5
+          zoom = 9
         } else {
-          console.log('something else ');
+          console.log('Altitude value was invalid: ' + alt);
         }
       }
 
