@@ -17,10 +17,10 @@ const apiKey = apiKeyFile.apiKey;
 
 mapboxgl.accessToken = "pk.eyJ1IjoidGhlbWFwc21pdGgiLCJhIjoiYTdmMDdiZjYxNzNmNzFiOGVjZDJiYzI5MGQ5N2VlMmQifQ.fUnAp-76Ka0d3v4oMNPhFw";
 const map = new mapboxgl.Map({
-  container: "map", // container id
-  style: "mapbox://styles/mapbox/dark-v9", // stylesheet location
-  center: [-96, 38], // starting position [lng, lat]
-  zoom: 3 // starting zoom
+  container: "map",
+  style: "mapbox://styles/mapbox/satellite-v9",
+  center: [-96, 38],
+  zoom: 3
 });
 
 // page init
