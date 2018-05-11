@@ -2,8 +2,6 @@ const fs = require('fs')
 const turf = require('@turf/turf')
 const restclient = require('restler');
 
-const t = JSON.parse(fs.readFileSync('adsbexchange/AircraftList-5-3-1639.json', 'utf-8'))
-
 const adsb_url = 'https://public-api.adsbexchange.com/VirtualRadar/AircraftList.json?';
 
 restclient.get(adsb_url, {
@@ -25,3 +23,6 @@ restclient.get(adsb_url, {
     })
   }
 })
+
+
+// better bbox for future scrapes: W: -73.476562, S:42.730874, E:-71.526489, N:45.026950
