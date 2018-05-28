@@ -20,6 +20,8 @@
   "devDependencies": {
     "electron": "^1.8.4",
     "electron-reload": "^1.2.2",
+    "nodemon": "^1.17.4",
+    "path": "^0.12.7",
     "restler": "^3.4.0"
   },
   "dependencies": {
