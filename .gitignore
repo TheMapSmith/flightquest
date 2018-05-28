@@ -5,3 +5,5 @@ bootstrap/
 jquery/
 storage/
 adsbexchange/scrape
+adsbexchange/dump
+.eslintrc
