@@ -22,7 +22,8 @@
     "electron-reload": "^1.2.2",
     "nodemon": "^1.17.4",
     "path": "^0.12.7",
-    "restler": "^3.4.0"
+    "restler": "^3.4.0",
+    "xo": "^0.21.1"
   },
   "dependencies": {
     "@turf/turf": "^5.1.6",

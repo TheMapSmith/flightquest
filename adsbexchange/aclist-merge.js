@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const dumpFolder = 'dump/2018-05-16/vt/';
+const dumpFolder = 'dump/2018-05-16/';
 
 const vtFlights = {};
 
@@ -39,40 +39,36 @@ function listFiles(folder) {
 }
 
 function fileIterate(scrapeFiles) {
-	for (let i = 0; i <= scrapeFiles.length; i++) {
+	const len = scrapeFiles.length + 1;
+	for (let i = 0; i <= len; i++) {
 		if (i === scrapeFiles.length) {
 			makeGeoJSON(vtFlights);
 		} else {
-			// Var savefile = 'dump/2018-05-16/vt/' + path.basename(filename, '.json') + '-vt.json'
-			const savefile = 'dump/2018-05-16/' + path.basename(scrapeFiles[i]);
-			if (fs.existsSync(savefile)) {
-				console.log(path.basename(savefile, '.json') + ' already exists');
-			} else {
-				console.log('Reading ' + scrapeFiles[i]);
-				const file = fs.readFileSync(scrapeFiles[i], 'utf-8');
-				vermontFilter(file, vtbbox, vtFlights);
+			const file = fs.readFileSync(scrapeFiles[i], 'utf-8');
+			try {
+				const AircraftList = JSON.parse(file);
+				const {acList} = AircraftList.acList;
+				const count = `${i} / ${len}`;
+				vermontFilter(acList, count);
+			} catch (e) {
+				console.log(e.message);
 			}
 		}
 	}
 }
 
-function vermontFilter(file, vtbbox, vtFlights) {
-	try {
-		const AircraftList = JSON.parse(file);
-		AircraftList.map(flight => {
-			if (flight.Lat && flight.Long) {
-				if (flight.Lat >= vtbbox.lat.min && flight.Lat <= vtbbox.lat.max &&
+function vermontFilter(acList, count) {
+	acList.map(flight => {
+		if (flight.Lat && flight.Long) {
+			if (flight.Lat >= vtbbox.lat.min && flight.Lat <= vtbbox.lat.max &&
 					flight.Long >= vtbbox.long.min && flight.Long <= vtbbox.long.max) {
-					createCoords(flight, vtFlights);
-				}
-				return false;
+				createCoords(flight, vtFlights);
 			}
 			return false;
-		});
-		console.log('Found ' + Object.keys(vtFlights).length + ' flights in VT.');
-	} catch (e) {
-		console.log(e);
-	}
+		}
+		return false;
+	});
+	console.log('Found ' + Object.keys(vtFlights).length + ' flights in VT. (' + count + ')');
 }
 
 function createCoords(vtFlight, vtFlights) {
@@ -89,7 +85,7 @@ function createCoords(vtFlight, vtFlights) {
 				}
 			};
 		}
-		for (let j = 0; j <= vtFlight.Cos.length; j += 4) {
+		for (let j = 0; j < vtFlight.Cos.length; j += 4) {
 			const lon = vtFlight.Cos[j + 1];
 			const lat = vtFlight.Cos[j];
 			if (lon && lat) {
