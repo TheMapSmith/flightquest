@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const Readable = require('stream').Readable;
+const {Readable} = require('stream');
 
 const dumpFolder = 'dump/2018-05-16/';
 
@@ -8,11 +8,11 @@ const vtFlights = {};
 
 const bbox = {
 	long: {
-		min: -73.5,
-		max: -71.5
+		min: -74,
+		max: -71
 	},
 	lat: {
-		min: 42.7,
+		min: 42,
 		max: 45
 	}
 };
@@ -109,20 +109,21 @@ function createCoords(vtFlight, vtFlights) {
 }
 
 function lineStringValidate(vtFlights) {
-	Object.values(vtFlights).filter(item => {
+	const validLines = Object.values(vtFlights).filter(item => {
 		return item.geometry.coordinates.length > 1;
 	});
-	makeGeoJSON(vtFlights);
+	makeGeoJSON(validLines);
 }
 
-function makeGeoJSON(vtFlights) {
-	Object.keys(vtFlights).forEach(item => {
-		geojson.features.push(vtFlights[item]);
+function makeGeoJSON(validLines) {
+	validLines.forEach(item => {
+		geojson.features.push(item);
 	});
 	const geojsonReadStream = new Readable();
 	const geojsonWriteStream = fs.createWriteStream('./stream.geojson');
-	geojsonReadStream.push(JSON.stringify(geojson))
-		.pipe(geojsonWriteStream)
+	geojsonReadStream.push(JSON.stringify(geojson, null, 2));
+	geojsonReadStream.push(null);
+	geojsonReadStream.pipe(geojsonWriteStream)
 		.on('error', err => {
 			console.log(err);
 		});
