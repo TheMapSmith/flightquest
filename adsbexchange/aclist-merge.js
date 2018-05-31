@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const Readable = require('stream').Readable;
 
 const dumpFolder = 'dump/2018-05-16/';
 
 const vtFlights = {};
 
-const vtbbox = {
+const bbox = {
 	long: {
 		min: -73.5,
 		max: -71.5
@@ -39,15 +40,15 @@ function listFiles(folder) {
 }
 
 function fileIterate(scrapeFiles) {
-	const len = scrapeFiles.length + 1;
+	const len = scrapeFiles.length;
 	for (let i = 0; i <= len; i++) {
-		if (i === scrapeFiles.length) {
-			makeGeoJSON(vtFlights);
+		if (i === len) {
+			lineStringValidate(vtFlights);
 		} else {
 			const file = fs.readFileSync(scrapeFiles[i], 'utf-8');
 			try {
 				const AircraftList = JSON.parse(file);
-				const {acList} = AircraftList.acList;
+				const acList = AircraftList.acList;
 				const count = `${i} / ${len}`;
 				vermontFilter(acList, count);
 			} catch (e) {
@@ -60,24 +61,34 @@ function fileIterate(scrapeFiles) {
 function vermontFilter(acList, count) {
 	acList.map(flight => {
 		if (flight.Lat && flight.Long) {
-			if (flight.Lat >= vtbbox.lat.min && flight.Lat <= vtbbox.lat.max &&
-					flight.Long >= vtbbox.long.min && flight.Long <= vtbbox.long.max) {
+			if (flight.Lat >= bbox.lat.min && flight.Lat <= bbox.lat.max &&
+					flight.Long >= bbox.long.min && flight.Long <= bbox.long.max) {
 				createCoords(flight, vtFlights);
 			}
 			return false;
 		}
 		return false;
 	});
-	console.log('Found ' + Object.keys(vtFlights).length + ' flights in VT. (' + count + ')');
+	console.log('Found ' + Object.keys(vtFlights).length + ' flights in bbox. (' + count + ')');
 }
 
 function createCoords(vtFlight, vtFlights) {
 	if (vtFlight.Cos) {
-		if (!vtFlights[vtFlight.Id]) {
-			vtFlights[vtFlight.Id] = {
+		const id = vtFlight.Id + '-' + vtFlight.PosTime;
+		let alt = 0.25;
+		if (vtFlight.Alt < 10000) {
+			alt = 1;
+		} else if (vtFlight.Alt > 10000 && vtFlight.Alt < 15000) {
+			alt = 0.75;
+		} else if (vtFlight.Alt > 15000 && vtFlight.Alt < 20000) {
+			alt = 0.50;
+		}
+		if (!vtFlights[id]) {
+			vtFlights[id] = {
 				type: 'Feature',
 				properties: {
-					id: vtFlight.Id
+					id,
+					alt
 				},
 				geometry: {
 					type: 'LineString',
@@ -89,7 +100,7 @@ function createCoords(vtFlight, vtFlights) {
 			const lon = vtFlight.Cos[j + 1];
 			const lat = vtFlight.Cos[j];
 			if (lon && lat) {
-				vtFlights[vtFlight.Id].geometry.coordinates.push([lon, lat]);
+				vtFlights[id].geometry.coordinates.push([lon, lat]);
 			} else {
 				console.log('Missing coords');
 			}
@@ -97,9 +108,25 @@ function createCoords(vtFlight, vtFlights) {
 	}
 }
 
+function lineStringValidate(vtFlights) {
+	Object.values(vtFlights).filter(item => {
+		return item.geometry.coordinates.length > 1;
+	});
+	makeGeoJSON(vtFlights);
+}
+
 function makeGeoJSON(vtFlights) {
 	Object.keys(vtFlights).forEach(item => {
 		geojson.features.push(vtFlights[item]);
 	});
-	fs.writeFileSync('VT-flights.geojson', JSON.stringify(geojson, null, 2));
+	const geojsonReadStream = new Readable();
+	const geojsonWriteStream = fs.createWriteStream('./stream.geojson');
+	geojsonReadStream.push(JSON.stringify(geojson))
+		.pipe(geojsonWriteStream)
+		.on('error', err => {
+			console.log(err);
+		});
+	geojsonReadStream.on('end', () => {
+		console.log('Ended!');
+	});
 }
