@@ -75,20 +75,22 @@ function vermontFilter(acList, count) {
 function createCoords(vtFlight, vtFlights) {
 	if (vtFlight.Cos) {
 		const id = vtFlight.Id + '-' + vtFlight.PosTime;
-		let alt = 0.25;
+		const alt = vtFlight.Alt;
+		let color = '#263D4C';
 		if (vtFlight.Alt < 10000) {
-			alt = 1;
-		} else if (vtFlight.Alt > 10000 && vtFlight.Alt < 15000) {
-			alt = 0.75;
-		} else if (vtFlight.Alt > 15000 && vtFlight.Alt < 20000) {
-			alt = 0.50;
+			color = '#23B5F5';
+		} else if (vtFlight.Alt > 10000 && vtFlight.Alt < 20000) {
+			color = '#3A8AB5';
+		} else if (vtFlight.Alt > 20000 && vtFlight.Alt < 30000) {
+			color = '#35627D';
 		}
 		if (!vtFlights[id]) {
 			vtFlights[id] = {
 				type: 'Feature',
 				properties: {
 					id,
-					alt
+					alt,
+					color
 				},
 				geometry: {
 					type: 'LineString',
@@ -120,7 +122,7 @@ function makeGeoJSON(validLines) {
 		geojson.features.push(item);
 	});
 	const geojsonReadStream = new Readable();
-	const geojsonWriteStream = fs.createWriteStream('./stream.geojson');
+	const geojsonWriteStream = fs.createWriteStream('./stream-color.geojson');
 	geojsonReadStream.push(JSON.stringify(geojson, null, 2));
 	geojsonReadStream.push(null);
 	geojsonReadStream.pipe(geojsonWriteStream)
