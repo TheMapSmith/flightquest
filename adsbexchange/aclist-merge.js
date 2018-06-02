@@ -63,7 +63,7 @@ function vermontFilter(acList, count) {
 		if (flight.Lat && flight.Long) {
 			if (flight.Lat >= bbox.lat.min && flight.Lat <= bbox.lat.max &&
 					flight.Long >= bbox.long.min && flight.Long <= bbox.long.max) {
-				createCoords(flight, vtFlights);
+				createCoords(flight);
 			}
 			return false;
 		}
@@ -72,9 +72,10 @@ function vermontFilter(acList, count) {
 	console.log('Found ' + Object.keys(vtFlights).length + ' flights in bbox. (' + count + ')');
 }
 
-function createCoords(vtFlight, vtFlights) {
+function createCoords(vtFlight) {
 	if (vtFlight.Cos) {
-		const id = vtFlight.Id + '-' + vtFlight.PosTime;
+		const uid = vtFlight.Id + '-' + vtFlight.PosTime;
+		const id = vtFlight.Id;
 		const alt = vtFlight.Alt;
 		let color = '#263D4C';
 		if (vtFlight.Alt < 10000) {
@@ -85,10 +86,14 @@ function createCoords(vtFlight, vtFlights) {
 			color = '#35627D';
 		}
 		if (!vtFlights[id]) {
-			vtFlights[id] = {
+			vtFlights[id] = {};
+		}
+		if (!vtFlights[id][uid]) {
+			vtFlights[id][uid] = {
 				type: 'Feature',
 				properties: {
 					id,
+					uid,
 					alt,
 					color
 				},
@@ -101,18 +106,32 @@ function createCoords(vtFlight, vtFlights) {
 		for (let j = 0; j < vtFlight.Cos.length; j += 4) {
 			const lon = vtFlight.Cos[j + 1];
 			const lat = vtFlight.Cos[j];
-			if (lon && lat) {
-				vtFlights[id].geometry.coordinates.push([lon, lat]);
+			if (lon && lat && vtFlights[id][uid]) {
+				if (vtFlights[id][uid].geometry.coordinates.indexOf([lon, lat]) === -1) {
+					vtFlights[id][uid].geometry.coordinates.push([lon, lat]);
+				} else {
+					console.log('Matches');
+				}
 			} else {
-				console.log('Missing coords');
+				console.log('something else');
 			}
 		}
 	}
 }
 
 function lineStringValidate(vtFlights) {
-	const validLines = Object.values(vtFlights).filter(item => {
-		return item.geometry.coordinates.length > 1;
+	const foundIds = Object.values(vtFlights);
+	const validLines = [];
+	foundIds.forEach(item => {
+		const j = Object.values(item);
+		const vl = j.filter(item => {
+			if (item.geometry.coordinates.length > 1) {
+				return item;
+			}
+		});
+		for (let i = 0; i < vl.length; i++) {
+			validLines.push(vl[i]);
+		}
 	});
 	makeGeoJSON(validLines);
 }
