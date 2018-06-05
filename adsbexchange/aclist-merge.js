@@ -87,38 +87,38 @@ function setProperties(vtFlight) {
 		} else if (vtFlight.Alt > 20000 && vtFlight.Alt < 30000) {
 			color = '#35627D';
 		}
-
-		if (!vtFlights[id]) {
-			vtFlights[id] = {};
-		}
-
-		vtFlights[id][timestamp] = {
-			type: 'Feature',
-			properties: {
-				timestamp,
-				id,
-				alt,
-				color
-			},
-			geometry: {
-				type: 'LineString',
-				coordinates: []
+		if (vtFlight.Cos.length >= 8) {
+			if (!vtFlights[id]) {
+				vtFlights[id] = {};
 			}
-		};
-		createCoords(vtFlight, id, timestamp);
+
+			vtFlights[id][timestamp] = {
+				type: 'Feature',
+				properties: {
+					timestamp,
+					id,
+					alt,
+					color
+				},
+				geometry: {
+					type: 'LineString',
+					coordinates: []
+				}
+			};
+			createCoords(vtFlight, id, timestamp);
+		}
 	}
 
 	function createCoords(vtFlight, id, timestamp) {
-		if (vtFlight.Cos.length >= 8) {
-			for (let j = 0; j <= vtFlight.Cos.length; j += 4) {
-				const lon = vtFlight.Cos[j + 1];
-				const lat = vtFlight.Cos[j];
-				if (lon && lat) {
-					vtFlights[id][timestamp].geometry.coordinates.push([lon, lat]);
-				}
+		if (timestamp === 1526429059058) {
+			console.log('log');
+		}
+		for (let j = 0; j <= vtFlight.Cos.length; j += 4) {
+			const lon = vtFlight.Cos[j + 1];
+			const lat = vtFlight.Cos[j];
+			if (lon && lat) {
+				vtFlights[id][timestamp].geometry.coordinates.push([lon, lat]);
 			}
-		} else {
-			console.log(`Not enough coordinates for ${id} + ${timestamp}.`);
 		}
 	}
 }
@@ -133,7 +133,7 @@ function makeGeoJSON(vtFlights) {
 	}
 
 	const geojsonReadStream = new Readable();
-	const geojsonWriteStream = fs.createWriteStream('./stream-color.geojson');
+	const geojsonWriteStream = fs.createWriteStream('./short.geojson');
 	geojsonReadStream.push(JSON.stringify(geojson, null, 2));
 	geojsonReadStream.push(null);
 	geojsonReadStream.pipe(geojsonWriteStream)
