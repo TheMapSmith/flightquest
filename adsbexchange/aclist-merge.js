@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const {Readable} = require('stream');
 
-const dumpFolder = 'dump/2018-05-16/';
+const dumpFolder = 'dump/2018-06-01/';
 
 const vtFlights = {};
 
@@ -60,7 +60,7 @@ function fileIterate(scrapeFiles) {
 
 function vermontFilter(acList, count) {
 	acList.map(flight => {
-		if (flight.Lat && flight.Long) {
+		if (flight.Lat && flight.Long && flight.Gnd === false) {
 			if (flight.Lat >= bbox.lat.min && flight.Lat <= bbox.lat.max &&
 					flight.Long >= bbox.long.min && flight.Long <= bbox.long.max) {
 				setProperties(flight);
@@ -77,6 +77,30 @@ function setProperties(vtFlight) {
 		const id = vtFlight.Id;
 		const timestamp = vtFlight.PosTime;
 		const alt = vtFlight.Alt;
+		const type = vtFlight.Type;
+		const operator = vtFlight.Op;
+		const EngType = vtFlight.EngType;
+		const engCount = vtFlight.Engines;
+		const mil = String(vtFlight.Mil);
+		let engine = '';
+		if (EngType === 0) {
+			engine = 'Glider';
+		}
+		if (EngType === 1) {
+			engine = 'Piston';
+		}
+		if (EngType === 2) {
+			engine = 'Turboprop';
+		}
+		if (EngType === 3) {
+			engine = 'Jet';
+		}
+		if (EngType === 4) {
+			engine = 'Electric';
+		}
+		if (!EngType) {
+			engine = '';
+		}
 
 		let color = '#263D4C';
 
@@ -98,7 +122,12 @@ function setProperties(vtFlight) {
 					timestamp,
 					id,
 					alt,
-					color
+					color,
+					type,
+					operator,
+					engine,
+					engCount,
+					mil
 				},
 				geometry: {
 					type: 'LineString',
@@ -133,7 +162,7 @@ function makeGeoJSON(vtFlights) {
 	}
 
 	const geojsonReadStream = new Readable();
-	const geojsonWriteStream = fs.createWriteStream('./short.geojson');
+	const geojsonWriteStream = fs.createWriteStream('./more-props.geojson');
 	geojsonReadStream.push(JSON.stringify(geojson, null, 2));
 	geojsonReadStream.push(null);
 	geojsonReadStream.pipe(geojsonWriteStream)
