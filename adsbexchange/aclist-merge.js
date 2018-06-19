@@ -3,6 +3,8 @@ const path = require('path');
 const {Readable} = require('stream');
 
 const dumpFolder = 'dump/2018-06-01/';
+const dev = 'OD';
+const airports = ['EGLL'];
 
 const vtFlights = {};
 
@@ -50,7 +52,7 @@ function fileIterate(scrapeFiles) {
 				const AircraftList = JSON.parse(file);
 				const acList = AircraftList.acList;
 				const count = `${i} / ${len}`;
-				vermontFilter(acList, count);
+				flightFilter(acList, count);
 			} catch (e) {
 				console.log(e.message);
 			}
@@ -58,14 +60,20 @@ function fileIterate(scrapeFiles) {
 	}
 }
 
-function vermontFilter(acList, count) {
+function flightFilter(acList, count) {
 	acList.map(flight => {
-		if (flight.Lat && flight.Long && flight.Gnd === false) {
-			if (flight.Lat >= bbox.lat.min && flight.Lat <= bbox.lat.max &&
-					flight.Long >= bbox.long.min && flight.Long <= bbox.long.max) {
+		if (dev === 'OD') {
+			if (flight.To && flight.To.substring(0, 4) === airports[0]) {
 				setProperties(flight);
 			}
-			return false;
+		} else if (dev === 'bbox') {
+			if (flight.Lat && flight.Long && flight.Gnd === false) {
+				if (flight.Lat >= bbox.lat.min && flight.Lat <= bbox.lat.max &&
+					flight.Long >= bbox.long.min && flight.Long <= bbox.long.max) {
+					setProperties(flight);
+				}
+				return false;
+			}
 		}
 		return false;
 	});
@@ -162,7 +170,7 @@ function makeGeoJSON(vtFlights) {
 	}
 
 	const geojsonReadStream = new Readable();
-	const geojsonWriteStream = fs.createWriteStream('./more-props.geojson');
+	const geojsonWriteStream = fs.createWriteStream(`./${airports[0]}.geojson`);
 	geojsonReadStream.push(JSON.stringify(geojson, null, 2));
 	geojsonReadStream.push(null);
 	geojsonReadStream.pipe(geojsonWriteStream)
