@@ -87,48 +87,41 @@ function flightFilter(acList, count) {
 function createObject(vtFlight) {
 	if (vtFlight.Cos) {
 		const id = vtFlight.Id;
-
-		if (vtFlight.Cos.length >= 8) {
-			const type = vtFlight.Type;
-			const operator = vtFlight.Op;
-			const engCount = vtFlight.Engines;
-			const mil = String(vtFlight.Mil);
-
-			let engine = '';
-			if (vtFlight.EngType === 0) {
-				engine = 'Glider';
-			}
-			if (vtFlight.EngType === 1) {
-				engine = 'Piston';
-			}
-			if (vtFlight.EngType === 2) {
-				engine = 'Turboprop';
-			}
-			if (vtFlight.EngType === 3) {
-				engine = 'Jet';
-			}
-			if (vtFlight.EngType === 4) {
-				engine = 'Electric';
-			}
-			if (!vtFlight.EngType) {
-				engine = '';
-			}
-
+		if (!vtFlights[id]) {
 			vtFlights[id] = {
 				type: 'Feature',
-				properties: {
-					id,
-					type,
-					operator,
-					engine,
-					engCount,
-					mil
-				},
+				properties: {},
 				geometry: {
 					type: 'LineString',
 					coordinates: []
 				}
 			};
+		}
+
+		if (vtFlight.Cos.length >= 8) {
+			vtFlights[id].properties.type = vtFlight.Type;
+			vtFlights[id].properties.operator = vtFlight.Op;
+			vtFlights[id].properties.engCount = vtFlight.Engines;
+			vtFlights[id].properties.mil = String(vtFlight.Mil);
+
+			if (vtFlight.EngType === 0) {
+				vtFlights[id].engine = 'Glider';
+			}
+			if (vtFlight.EngType === 1) {
+				vtFlights[id].engine = 'Piston';
+			}
+			if (vtFlight.EngType === 2) {
+				vtFlights[id].engine = 'Turboprop';
+			}
+			if (vtFlight.EngType === 3) {
+				vtFlights[id].engine = 'Jet';
+			}
+			if (vtFlight.EngType === 4) {
+				vtFlights[id].engine = 'Electric';
+			}
+			if (!vtFlight.EngType) {
+				vtFlights[id].engine = '';
+			}
 			createCoords(vtFlight, id);
 		}
 	}
@@ -172,10 +165,11 @@ function createCoords(vtFlight, id) {
 function makeGeoJSON(vtFlights) {
 	for (let i = 0; i < Object.keys(vtFlights).length; i++) {
 		const key = Object.keys(vtFlights)[i];
-		const ts = Object.keys(vtFlights[key]);
-		for (let k = 0; k < ts.length; k++) {
-			geojson.features.push(vtFlights[key][ts[k]]);
-		}
+		geojson.features.push(vtFlights[key]);
+		// Old const ts = Object.keys(vtFlights[key]);
+		// for (let k = 0; k < ts.length; k++) {
+		// 	geojson.features.push(vtFlights[key][ts[k]]);
+		// }
 	}
 
 	const geojsonReadStream = new Readable();
@@ -184,11 +178,11 @@ function makeGeoJSON(vtFlights) {
 		if (i === airports.length - 1) {
 			filename += airports[i] + '.geojson';
 		} else {
-			filename += airports[i] + ' - ';
+			filename += airports[i] + '-';
 		}
 	}
 	console.log(filename);
-	const geojsonWriteStream = fs.createWriteStream(`./${airports[0]}.geojson`);
+	const geojsonWriteStream = fs.createWriteStream(filename);
 	geojsonReadStream.push(JSON.stringify(geojson, null, 2));
 	geojsonReadStream.push(null);
 	geojsonReadStream.pipe(geojsonWriteStream)
