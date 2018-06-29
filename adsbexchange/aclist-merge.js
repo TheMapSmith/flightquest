@@ -4,7 +4,7 @@ const {Readable} = require('stream');
 
 const dumpFolder = 'dump/2018-06-01/';
 const dev = 'OD';
-const airports = ['KMLB', 'KRSW', 'KMCO'];
+const airports = ['KDFW'];
 
 const vtFlights = {};
 
@@ -50,7 +50,7 @@ function fileIterate(scrapeFiles) {
 			const file = fs.readFileSync(scrapeFiles[i], 'utf-8');
 			try {
 				const AircraftList = JSON.parse(file);
-				const acList = AircraftList.acList;
+				const [...acList] = AircraftList.acList;
 				const count = `${i} / ${len}`;
 				flightFilter(acList, count);
 			} catch (e) {
@@ -85,78 +85,64 @@ function flightFilter(acList, count) {
 }
 
 function createObject(vtFlight) {
-	if (vtFlight.Cos) {
+	if (vtFlight.Cos && vtFlight.Cos.length >= 8) {
 		const id = vtFlight.Id;
 		if (!vtFlights[id]) {
 			vtFlights[id] = {
 				type: 'Feature',
-				properties: {},
+				properties: {
+					id
+				},
 				geometry: {
 					type: 'LineString',
 					coordinates: []
-				}
+				},
+				Cos: []
 			};
 		}
 
-		if (vtFlight.Cos.length >= 8) {
-			vtFlights[id].properties.type = vtFlight.Type;
-			vtFlights[id].properties.operator = vtFlight.Op;
-			vtFlights[id].properties.engCount = vtFlight.Engines;
-			vtFlights[id].properties.mil = String(vtFlight.Mil);
+		vtFlights[id].properties.type = vtFlight.Type;
+		vtFlights[id].properties.operator = vtFlight.Op;
+		vtFlights[id].properties.engCount = vtFlight.Engines;
+		vtFlights[id].properties.mil = String(vtFlight.Mil);
 
-			if (vtFlight.EngType === 0) {
-				vtFlights[id].engine = 'Glider';
-			}
-			if (vtFlight.EngType === 1) {
-				vtFlights[id].engine = 'Piston';
-			}
-			if (vtFlight.EngType === 2) {
-				vtFlights[id].engine = 'Turboprop';
-			}
-			if (vtFlight.EngType === 3) {
-				vtFlights[id].engine = 'Jet';
-			}
-			if (vtFlight.EngType === 4) {
-				vtFlights[id].engine = 'Electric';
-			}
-			if (!vtFlight.EngType) {
-				vtFlights[id].engine = '';
-			}
-			createCoords(vtFlight, id);
+		if (vtFlight.EngType === 0) {
+			vtFlights[id].properties.engine = 'Glider';
 		}
-	}
-}
-
-function setProperties(vtFlight) {
-	if (vtFlight.Cos) {
-		const id = vtFlight.Id;
-		const timestamp = vtFlight.PosTime;
-		const alt = vtFlight.Alt;
-		const type = vtFlight.Type;
-		const operator = vtFlight.Op;
-		const EngType = vtFlight.EngType;
-		const engCount = vtFlight.Engines;
-		const mil = String(vtFlight.Mil);
-
-		let color = '#263D4C';
-
-		if (vtFlight.Alt < 10000) {
-			color = '#23B5F5';
-		} else if (vtFlight.Alt > 10000 && vtFlight.Alt < 20000) {
-			color = '#3A8AB5';
-		} else if (vtFlight.Alt > 20000 && vtFlight.Alt < 30000) {
-			color = '#35627D';
+		if (vtFlight.EngType === 1) {
+			vtFlights[id].properties.engine = 'Piston';
 		}
-	}
-}
-
-function createCoords(vtFlight, id) {
-	for (let j = 0; j <= vtFlight.Cos.length; j += 4) {
-		const lon = vtFlight.Cos[j + 1];
-		const lat = vtFlight.Cos[j];
-		if (lon && lat) {
-			if (vtFlights[id].geometry.coordinates.indexOf([lon, lat] === -1)) {
-				vtFlights[id].geometry.coordinates.push([lon, lat]);
+		if (vtFlight.EngType === 2) {
+			vtFlights[id].properties.engine = 'Turboprop';
+		}
+		if (vtFlight.EngType === 3) {
+			vtFlights[id].properties.engine = 'Jet';
+		}
+		if (vtFlight.EngType === 4) {
+			vtFlights[id].properties.engine = 'Electric';
+		}
+		if (!vtFlight.EngType) {
+			vtFlights[id].properties.engine = '';
+		}
+		const CosString = [];
+		for (let i = 0; i < vtFlight.Cos.length; i += 4) {
+			const set = {
+				lat: Number(vtFlight.Cos[i]),
+				lon: Number(vtFlight.Cos[i + 1]),
+				alt: Number(vtFlight.Cos[i + 3]),
+				ts: Number(vtFlight.Cos[i + 2])
+			};
+			const latlon = String(set.lon) + String(set.lat);
+			const prevSet = vtFlights[id].Cos[vtFlights[id].Cos.length - 1];
+			if (prevSet) {
+				const prevTs = prevSet.ts;
+				if (CosString.indexOf(latlon) === -1 && set.ts > prevTs) {
+					vtFlights[id].Cos.push(set);
+				}
+				CosString.push(latlon);
+			} else {
+				vtFlights[id].Cos.push(set);
+				CosString.push(latlon);
 			}
 		}
 	}
@@ -165,11 +151,33 @@ function createCoords(vtFlight, id) {
 function makeGeoJSON(vtFlights) {
 	for (let i = 0; i < Object.keys(vtFlights).length; i++) {
 		const key = Object.keys(vtFlights)[i];
-		geojson.features.push(vtFlights[key]);
-		// Old const ts = Object.keys(vtFlights[key]);
-		// for (let k = 0; k < ts.length; k++) {
-		// 	geojson.features.push(vtFlights[key][ts[k]]);
-		// }
+		const flight = vtFlights[key];
+		const [...Cos] = flight.Cos;
+		let prevAlt = 0;
+		let coordinates = [];
+		for (let m = 0; m <= Cos.length; m++) {
+			if (m === Cos.length) {
+				flight.geometry.coordinates = coordinates;
+				delete flight.Cos;
+				geojson.features.push(flight);
+			} else {
+				const coordPair = [Cos[m].lon, Cos[m].lat];
+				const alt = Cos[m].alt;
+				if (m === 0) {
+					coordinates.push(coordPair);
+				} else if (m > 0 && Math.abs(alt - prevAlt) > 2000 && coordinates.length > 1) {
+					flight.geometry.coordinates = coordinates;
+					delete flight.Cos;
+					geojson.features.push(flight);
+					flight.geometry.coordinates = [];
+					coordinates = [];
+					coordinates.push(coordPair);
+				} else {
+					coordinates.push(coordPair);
+				}
+				prevAlt = alt;
+			}
+		}
 	}
 
 	const geojsonReadStream = new Readable();
